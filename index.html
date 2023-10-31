@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        position: relative;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+      }
+      .bc-img {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%,-50%);
+        display: block;
+        width: 1000px;
+        object-fit: contain;
+      }
+      svg{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-42%,-40%);
+        user-select: none;
+      }
+      svg circle {
+        cursor: pointer;
+        z-index: 2;
+      }
+      svg line {
+        stroke: #2e5598;
+        stroke-width: 3;
+        z-index: 1;
+        user-select: none;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <img class="bc-img" src="./底图.jpg"></img>
+    <svg width="840" height="110">
+      <circle cx="50" cy="60" r="13" fill="#2e5598" />
+      <circle cx="200" cy="60" r="13" fill="#2e5598" />
+      <circle cx="350" cy="60" r="13" fill="#2e5598" />
+      <circle cx="500" cy="60" r="13" fill="#2e5598" />
+      <circle cx="650" cy="60" r="13" fill="#2e5598" />
+    </svg>
+    <script>
+      const svg = document.querySelector('svg')
+      const maxWidth = +svg.getAttribute('width')
+      const maxHeight = +svg.getAttribute('height')
+      const circles = Array.from(document.querySelectorAll('circle'))
+      const lines = []
+      circles.forEach((circle, i) => {
+        circle.addEventListener('mousedown', down)
+        circle.addEventListener('mousemove', move)
+        circle.addEventListener('mouseup', up)
+        // 绘制直线
+        if (circles[i + 1]) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+          const c1x = circle.getAttribute('cx')
+          const c1y = circle.getAttribute('cy')
+          const c2x = circles[i + 1].getAttribute('cx')
+          const c2y = circles[i + 1].getAttribute('cy')
+          line.id = i
+          line.setAttribute('x1', c1x)
+          line.setAttribute('y1', c1y)
+          line.setAttribute('x2', c2x)
+          line.setAttribute('y2', c2y)
+          document.querySelector('svg').appendChild(line)
+          lines.push(line)
+        }
+      })
+      let isDown = false
+      let pre = [0, 0]
+      let index = -1
+      let targetCircle = null
+      function down(e) {
+        isDown = true
+        pre = [e.offsetX, e.offsetY]
+        index = circles.findIndex(item => item === e.target)
+        targetCircle = e.target
+      }
+      function move(e) {
+        if (!isDown||targetCircle!==e.target) return
+        const { offsetX: x1, offsetY: y1 } = e
+        let movex = +e.target.getAttribute('cx') + x1 - pre[0]
+        let movey = +e.target.getAttribute('cy') + y1 - pre[1]
+        movex = movex-13<0?13:movex
+        movex = movex+13>maxWidth?maxWidth-13:movex
+        movey = movey-13<0?13:movey
+        movey = movey+13>maxHeight?maxHeight-13:movey 
+        e.target.setAttribute('cx', movex)
+        e.target.setAttribute('cy', movey)
+        if (index === 0) {
+          lines[index].setAttribute('x1', movex)
+          lines[index].setAttribute('y1', movey)
+        } else if (index === circles.length - 1) {
+          lines[index - 1].setAttribute('x2', movex)
+          lines[index - 1].setAttribute('y2', movey)
+        } else {
+          const line1 = lines[index]
+          const line2 = lines[index - 1]
+          line1.setAttribute('x1', movex)
+          line1.setAttribute('y1', movey)
+          line2.setAttribute('x2', movex)
+          line2.setAttribute('y2', movey)
+        }
+        pre = [x1, y1]
+      }
+      function up() {
+        isDown = false
+        pre = [0, 0]
+        targetCircle = null
+      }
+      svg.addEventListener('mousemove', e => {
+        if (e.target===svg) {
+          isDown = false
+          pre = [0, 0]
+          targetCircle = null
+        }
+      })
+    </script>
+  </body>
+</html>
